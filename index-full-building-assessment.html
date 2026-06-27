@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eesti RenoHeat Explorer - Full Building Assessment</title>
+  <style>
+    :root {
+      --ink: #17211f;
+      --muted: #5c6964;
+      --line: #d9e1dd;
+      --panel: #ffffff;
+      --page: #eef3f0;
+      --green: #2f7150;
+      --green-dark: #24593f;
+      --blue: #2d5d8f;
+      --amber: #b7791f;
+      --red: #a4443d;
+      --soft: #f8fbf9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--page);
+    }
+
+    body {
+      min-height: 100%;
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(340px, 440px) minmax(0, 1fr);
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--soft);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .panel-body {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      margin: 0 0 6px;
+      color: #2e403b;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button,
+    .link-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: #fff;
+      background: var(--green);
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button:hover,
+    .link-button:hover {
+      background: var(--green-dark);
+    }
+
+    button.secondary,
+    .link-button.secondary {
+      color: var(--ink);
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .status {
+      min-height: 40px;
+      border-left: 3px solid var(--amber);
+      padding: 8px 0 8px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .source-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .source-row,
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #edf1ef;
+      padding-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .source-row:last-child,
+    .result-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .source-row span:first-child,
+    .result-row span:first-child {
+      color: var(--muted);
+    }
+
+    .source-row strong,
+    .result-row strong {
+      text-align: right;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      color: #fff;
+      background: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge.manual {
+      background: var(--amber);
+    }
+
+    .badge.missing {
+      background: var(--red);
+    }
+
+    .measure-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .measure {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      background: #fff;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .measure input {
+      width: 18px;
+      min-height: 18px;
+      margin: 1px 0 0;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      min-height: 106px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--panel);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 25px;
+      line-height: 1.05;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .wide-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .mini-map {
+      position: relative;
+      min-height: 260px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(47, 113, 80, 0.14) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(45, 93, 143, 0.12) 1px, transparent 1px),
+        #dfe9e4;
+      background-size: 34px 34px;
+    }
+
+    .map-marker {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      border: 4px solid #fff;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 8px 18px rgba(23, 33, 31, 0.25);
+      transform: translate(-50%, -50%);
+    }
+
+    .building-block {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 112px;
+      height: 72px;
+      border: 2px solid rgba(23, 33, 31, 0.5);
+      background: rgba(255, 255, 255, 0.7);
+      transform: translate(-50%, -50%) rotate(-14deg);
+    }
+
+    .map-caption {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.88);
+      font-size: 13px;
+    }
+
+    @media (max-width: 1120px) {
+      .dashboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .wide-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 860px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .layout {
+        padding: 12px;
+      }
+
+      .form-grid,
+      .measure-grid,
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>Eesti RenoHeat Explorer</h1>
+        <p class="subtitle">Address lookup plus building geometry, energy assumptions, renovation scope, and financial assessment.</p>
+      </div>
+      <a class="link-button secondary" href="index-maaruum-3d.html">Open 3D view</a>
+    </header>
+
+    <div class="layout">
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Official Lookup</h2>
+            <span class="badge">In-ADS</span>
+          </div>
+          <div class="panel-body">
+            <div>
+              <label for="address">Address</label>
+              <input id="address" value="Vaksali 17, Tartu">
+            </div>
+            <div class="actions">
+              <button id="lookupBtn" type="button">Lookup</button>
+              <button id="sampleBtn" class="secondary" type="button">Sample</button>
+            </div>
+            <p id="status" class="status">Address finds the official IDs. The other fields below come from EHR, ETAK/MaaRuum, or manual project inputs.</p>
+            <div class="source-grid">
+              <div class="source-row"><span>ADS OID</span><strong id="adsOid">-</strong></div>
+              <div class="source-row"><span>ADR ID</span><strong id="adrId">-</strong></div>
+              <div class="source-row"><span>Coordinates</span><strong id="coords">-</strong></div>
+              <div class="source-row"><span>Match quality</span><strong id="quality">-</strong></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Building Registry</h2>
+            <span class="badge manual">EHR/User</span>
+          </div>
+          <div class="panel-body form-grid">
+            <div>
+              <label for="buildingType">Building type</label>
+              <select id="buildingType">
+                <option>Apartment building</option>
+                <option>Single-family house</option>
+                <option>Public building</option>
+                <option>Commercial building</option>
+              </select>
+            </div>
+            <div>
+              <label for="constructionYear">Construction year</label>
+              <input id="constructionYear" type="number" value="1983">
+            </div>
+            <div>
+              <label for="netArea">Closed net area m2</label>
+              <input id="netArea" type="number" value="2850">
+            </div>
+            <div>
+              <label for="floors">Floors</label>
+              <input id="floors" type="number" value="5">
+            </div>
+            <div>
+              <label for="footprintArea">Footprint m2</label>
+              <input id="footprintArea" type="number" value="620">
+            </div>
+            <div>
+              <label for="heightM">Height m</label>
+              <input id="heightM" type="number" value="15">
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Energy System</h2>
+            <span class="badge manual">Inputs</span>
+          </div>
+          <div class="panel-body form-grid">
+            <div class="full">
+              <label for="heatSource">Current heat source</label>
+              <select id="heatSource">
+                <option value="district">District heating</option>
+                <option value="gas">Gas boiler</option>
+                <option value="electric">Direct electric</option>
+                <option value="oil">Oil boiler</option>
+              </select>
+            </div>
+            <div>
+              <label for="annualHeat">Annual heat kWh</label>
+              <input id="annualHeat" type="number" value="360000">
+            </div>
+            <div>
+              <label for="energyPrice">Energy price EUR/kWh</label>
+              <input id="energyPrice" type="number" step="0.001" value="0.08">
+            </div>
+            <div>
+              <label for="co2Factor">CO2 kg/kWh</label>
+              <input id="co2Factor" type="number" step="0.001" value="0.11">
+            </div>
+            <div>
+              <label for="hpScop">New heat pump SCOP</label>
+              <input id="hpScop" type="number" step="0.1" value="3.5">
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <main class="stack">
+        <section class="dashboard">
+          <div class="metric">
+            <strong id="demandMetric">126</strong>
+            <span>Current heat intensity kWh/m2/year</span>
+          </div>
+          <div class="metric">
+            <strong id="savingMetric">43%</strong>
+            <span>Estimated energy reduction after selected renovation</span>
+          </div>
+          <div class="metric">
+            <strong id="paybackMetric">18.2</strong>
+            <span>Simple payback years after grant</span>
+          </div>
+          <div class="metric">
+            <strong id="co2Metric">17.0</strong>
+            <span>Annual CO2 reduction tonnes</span>
+          </div>
+        </section>
+
+        <section class="wide-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Renovation Scope</h2>
+              <span class="badge manual">Project</span>
+            </div>
+            <div class="panel-body">
+              <div class="form-grid">
+                <div>
+                  <label for="packageSelect">Target package</label>
+                  <select id="packageSelect">
+                    <option value="light">Light renovation</option>
+                    <option value="deep" selected>Deep renovation</option>
+                    <option value="nearZero">Near-zero energy</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="grantRate">Grant rate %</label>
+                  <input id="grantRate" type="number" value="30">
+                </div>
+                <div>
+                  <label for="capexM2">Renovation cost EUR/m2</label>
+                  <input id="capexM2" type="number" value="330">
+                </div>
+                <div>
+                  <label for="heatPumpCapex">Heat pump cost EUR</label>
+                  <input id="heatPumpCapex" type="number" value="85000">
+                </div>
+              </div>
+
+              <div class="measure-grid">
+                <label class="measure"><input class="measureCheck" type="checkbox" value="facade" checked><span>Facade insulation</span></label>
+                <label class="measure"><input class="measureCheck" type="checkbox" value="roof" checked><span>Roof insulation</span></label>
+                <label class="measure"><input class="measureCheck" type="checkbox" value="windows" checked><span>Window replacement</span></label>
+                <label class="measure"><input class="measureCheck" type="checkbox" value="ventilation" checked><span>Heat recovery ventilation</span></label>
+                <label class="measure"><input class="measureCheck" type="checkbox" value="heatpump"><span>Heat pump conversion</span></label>
+                <label class="measure"><input class="measureCheck" type="checkbox" value="solar"><span>Solar PV option</span></label>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Spatial Context</h2>
+              <span class="badge">ETAK/MaaRuum</span>
+            </div>
+            <div class="panel-body">
+              <div class="mini-map" aria-label="Building context preview">
+                <div class="building-block"></div>
+                <div class="map-marker"></div>
+                <div class="map-caption" id="mapCaption">Lookup an address to attach official coordinates and ADS identifiers.</div>
+              </div>
+              <div class="source-grid">
+                <div class="source-row"><span>Geometry source</span><strong>ETAK / MaaRuum LOD2</strong></div>
+                <div class="source-row"><span>Join key</span><strong>ads_oid + ehr_gid</strong></div>
+                <div class="source-row"><span>Calculation source</span><strong>EHR + user inputs</strong></div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="wide-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">Calculation Results</h2>
+              <span class="badge">Live</span>
+            </div>
+            <div class="panel-body source-grid">
+              <div class="result-row"><span>Current annual heat cost</span><strong id="currentCost">-</strong></div>
+              <div class="result-row"><span>Post-renovation heat demand</span><strong id="postDemand">-</strong></div>
+              <div class="result-row"><span>Annual energy saving</span><strong id="energySaving">-</strong></div>
+              <div class="result-row"><span>Gross investment</span><strong id="grossInvestment">-</strong></div>
+              <div class="result-row"><span>Grant amount</span><strong id="grantAmount">-</strong></div>
+              <div class="result-row"><span>Net investment</span><strong id="netInvestment">-</strong></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2 class="panel-title">What Each Dataset Adds</h2>
+              <span class="badge missing">Needed</span>
+            </div>
+            <div class="panel-body source-grid">
+              <div class="source-row"><span>In-ADS</span><strong>official address, ADS OID, coordinates</strong></div>
+              <div class="source-row"><span>ETAK</span><strong>footprint, height, ETAK ID, EHR GID</strong></div>
+              <div class="source-row"><span>MaaRuum 3D</span><strong>LOD1/LOD2 visual building model</strong></div>
+              <div class="source-row"><span>EHR</span><strong>year, area, use, heating system</strong></div>
+              <div class="source-row"><span>User/project</span><strong>chosen measures, costs, grants</strong></div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const INADS_URL = "https://inaadress.maaamet.ee/inaadress/gazetteer";
+
+    const byId = (id) => document.getElementById(id);
+    const money = (value) => new Intl.NumberFormat("en-EE", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 0
+    }).format(value);
+    const number = (value, digits = 0) => new Intl.NumberFormat("en-EE", {
+      maximumFractionDigits: digits
+    }).format(value);
+
+    const packageSavings = {
+      light: 0.24,
+      deep: 0.43,
+      nearZero: 0.62
+    };
+
+    const measureSavings = {
+      facade: 0.10,
+      roof: 0.07,
+      windows: 0.06,
+      ventilation: 0.12,
+      heatpump: 0.00,
+      solar: 0.04
+    };
+
+    const heatSourceDefaults = {
+      district: { price: 0.08, co2: 0.11 },
+      gas: { price: 0.07, co2: 0.20 },
+      electric: { price: 0.18, co2: 0.28 },
+      oil: { price: 0.11, co2: 0.27 }
+    };
+
+    function value(id) {
+      return Number(byId(id).value) || 0;
+    }
+
+    function selectedMeasureSaving() {
+      return Array.from(document.querySelectorAll(".measureCheck:checked"))
+        .reduce((sum, input) => sum + (measureSavings[input.value] || 0), 0);
+    }
+
+    function calculate() {
+      const netArea = Math.max(value("netArea"), 1);
+      const annualHeat = value("annualHeat");
+      const energyPrice = value("energyPrice");
+      const co2Factor = value("co2Factor");
+      const capexM2 = value("capexM2");
+      const heatPumpCapex = byId("heatpumpChecked") ? 0 : value("heatPumpCapex");
+      const grantRate = value("grantRate") / 100;
+      const packageValue = byId("packageSelect").value;
+      const heatPumpSelected = document.querySelector(".measureCheck[value='heatpump']").checked;
+
+      const savingRate = Math.min(0.75, Math.max(packageSavings[packageValue], selectedMeasureSaving()));
+      const postDemandValue = annualHeat * (1 - savingRate);
+      const currentCostValue = annualHeat * energyPrice;
+      const postEnergyCost = heatPumpSelected
+        ? (postDemandValue / Math.max(value("hpScop"), 1)) * 0.18
+        : postDemandValue * energyPrice;
+      const annualSavingValue = Math.max(0, currentCostValue - postEnergyCost);
+      const grossInvestmentValue = (netArea * capexM2) + (heatPumpSelected ? heatPumpCapex : 0);
+      const grantValue = grossInvestmentValue * grantRate;
+      const netInvestmentValue = grossInvestmentValue - grantValue;
+      const payback = annualSavingValue > 0 ? netInvestmentValue / annualSavingValue : 0;
+      const co2Reduction = (annualHeat - postDemandValue) * co2Factor / 1000;
+
+      byId("demandMetric").textContent = number(annualHeat / netArea, 0);
+      byId("savingMetric").textContent = `${number(savingRate * 100, 0)}%`;
+      byId("paybackMetric").textContent = payback ? number(payback, 1) : "-";
+      byId("co2Metric").textContent = number(co2Reduction, 1);
+
+      byId("currentCost").textContent = money(currentCostValue);
+      byId("postDemand").textContent = `${number(postDemandValue, 0)} kWh/year`;
+      byId("energySaving").textContent = money(annualSavingValue);
+      byId("grossInvestment").textContent = money(grossInvestmentValue);
+      byId("grantAmount").textContent = money(grantValue);
+      byId("netInvestment").textContent = money(netInvestmentValue);
+    }
+
+    function applySample() {
+      byId("constructionYear").value = 1983;
+      byId("netArea").value = 2850;
+      byId("floors").value = 5;
+      byId("footprintArea").value = 620;
+      byId("heightM").value = 15;
+      byId("heatSource").value = "district";
+      byId("annualHeat").value = 360000;
+      byId("energyPrice").value = 0.08;
+      byId("co2Factor").value = 0.11;
+      byId("packageSelect").value = "deep";
+      byId("capexM2").value = 330;
+      byId("grantRate").value = 30;
+      document.querySelectorAll(".measureCheck").forEach((input) => {
+        input.checked = ["facade", "roof", "windows", "ventilation"].includes(input.value);
+      });
+      byId("status").textContent = "Sample building inputs loaded. Replace these with EHR/ETAK/project data for a real case.";
+      calculate();
+    }
+
+    function applyHeatSourceDefaults() {
+      const defaults = heatSourceDefaults[byId("heatSource").value];
+      if (!defaults) return;
+      byId("energyPrice").value = defaults.price;
+      byId("co2Factor").value = defaults.co2;
+      calculate();
+    }
+
+    async function lookupAddress() {
+      const address = byId("address").value.trim();
+      if (!address) {
+        byId("status").textContent = "Enter an address first.";
+        return;
+      }
+
+      byId("lookupBtn").disabled = true;
+      byId("status").textContent = "Looking up official In-ADS address...";
+
+      try {
+        const response = await fetch(`${INADS_URL}?address=${encodeURIComponent(address)}`);
+        if (!response.ok) throw new Error(`In-ADS returned ${response.status}`);
+        const payload = await response.json();
+        const record = Array.isArray(payload) ? payload[0] : payload;
+        if (!record) throw new Error("No address match");
+
+        const lat = Number(record.viitepunkt_b);
+        const lon = Number(record.viitepunkt_l);
+        byId("adsOid").textContent = record.ads_oid || "-";
+        byId("adrId").textContent = record.adr_id || "-";
+        byId("coords").textContent = Number.isFinite(lat) && Number.isFinite(lon)
+          ? `${lat.toFixed(6)}, ${lon.toFixed(6)}`
+          : "-";
+        byId("quality").textContent = record.kvaliteet || "-";
+        byId("mapCaption").textContent = record.taisaadress || record.pikkaadress || address;
+        byId("status").textContent = "Address matched. Next step is joining this ADS OID to ETAK/MaaRuum and EHR.";
+      } catch (error) {
+        byId("status").textContent = "Browser lookup could be blocked by CORS. Use the backend In-ADS proxy for production.";
+        console.error(error);
+      } finally {
+        byId("lookupBtn").disabled = false;
+      }
+    }
+
+    document.querySelectorAll("input, select").forEach((element) => {
+      element.addEventListener("input", calculate);
+      element.addEventListener("change", calculate);
+    });
+    document.querySelectorAll(".measureCheck").forEach((element) => element.addEventListener("change", calculate));
+    byId("heatSource").addEventListener("change", applyHeatSourceDefaults);
+    byId("lookupBtn").addEventListener("click", lookupAddress);
+    byId("sampleBtn").addEventListener("click", applySample);
+    calculate();
+  </script>
+</body>
+</html>

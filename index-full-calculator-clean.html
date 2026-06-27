@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eesti RenoHeat Explorer</title>
+  <style>
+    :root {
+      --ink: #18211f;
+      --muted: #63706b;
+      --line: #dbe3df;
+      --page: #eef3f0;
+      --panel: #ffffff;
+      --soft: #f8fbf9;
+      --green: #2f7150;
+      --green-dark: #24593f;
+      --blue: #2d5d8f;
+      --amber: #b7791f;
+      --red: #a4443d;
+      --shadow: 0 14px 30px rgba(24, 33, 31, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background: var(--page);
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+
+    button,
+    input,
+    select,
+    textarea { font: inherit; }
+
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(360px, 440px) minmax(0, 1fr);
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      background: var(--soft);
+    }
+
+    .panel-body {
+      display: grid;
+      gap: 14px;
+      padding: 15px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      margin: 0 0 6px;
+      color: #30413c;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--green);
+    }
+
+    .range-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .range-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    output {
+      color: var(--green-dark);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button,
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: #fff;
+      background: var(--green);
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button:hover,
+    .button:hover { background: var(--green-dark); }
+
+    button.secondary,
+    .button.secondary {
+      color: var(--ink);
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      color: #fff;
+      background: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .badge.green { background: var(--green); }
+    .badge.amber { background: var(--amber); }
+    .badge.red { background: var(--red); }
+
+    .status {
+      min-height: 40px;
+      border-left: 3px solid var(--amber);
+      padding: 8px 0 8px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .kv {
+      display: grid;
+      gap: 8px;
+    }
+
+    .kv-row,
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #edf1ef;
+      padding-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .kv-row:last-child,
+    .result-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .kv-row span:first-child,
+    .result-row span:first-child { color: var(--muted); }
+
+    .kv-row strong,
+    .result-row strong { text-align: right; }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      min-height: 108px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 25px;
+      line-height: 1.05;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .measure-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .measure {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      background: #fff;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .measure input {
+      width: 18px;
+      min-height: 18px;
+      margin: 1px 0 0;
+    }
+
+    .energy-labels {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 5px;
+    }
+
+    .label-btn {
+      min-height: 34px;
+      padding: 6px 0;
+      border-color: var(--line);
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .label-btn.active {
+      color: #fff;
+      background: var(--green);
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .bar-track {
+      height: 12px;
+      border-radius: 999px;
+      background: #edf1ef;
+      overflow: hidden;
+    }
+
+    .bar {
+      width: 0;
+      height: 100%;
+      border-radius: 999px;
+      background: var(--green);
+      transition: width 160ms ease;
+    }
+
+    .bar.blue { background: var(--blue); }
+    .bar.amber { background: var(--amber); }
+
+    .batch-results {
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .batch-row {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      background: var(--soft);
+    }
+
+    .batch-row strong {
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    @media (max-width: 1160px) {
+      .dashboard,
+      .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 860px) {
+      header,
+      .layout,
+      .dashboard,
+      .form-grid,
+      .grid-3,
+      .measure-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .layout { padding: 12px; }
+      header { position: static; }
+      .energy-labels { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>Eesti RenoHeat Explorer</h1>
+        <p class="subtitle">Full heating upgrade and building renovation assessment for Estonian buildings.</p>
+      </div>
+      <a class="button secondary" href="index-maaruum-3d.html">3D view</a>
+    </header>
+
+    <div class="layout">
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Building Lookup</h2>
+            <span class="badge">Address</span>
+          </div>
+          <div class="panel-body">
+            <div>
+              <label for="addressInput">Address or EHR code</label>
+              <input id="addressInput" value="Vaksali 17, Tartu">
+            </div>
+            <div class="actions">
+              <button id="lookupBtn" type="button">Lookup</button>
+              <button id="sampleBtn" class="secondary" type="button">Load sample</button>
+            </div>
+            <p id="status" class="status">Use address lookup, then adjust the building and project inputs below.</p>
+            <div class="kv">
+              <div class="kv-row"><span>ADS OID</span><strong id="adsOid">-</strong></div>
+              <div class="kv-row"><span>ADR ID</span><strong id="adrId">-</strong></div>
+              <div class="kv-row"><span>EHR code</span><strong id="ehrCode">104016706</strong></div>
+              <div class="kv-row"><span>Coordinates</span><strong id="coords">-</strong></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Building Inputs</h2>
+            <span class="badge amber">Editable</span>
+          </div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <div>
+                <label for="municipality">Municipality</label>
+                <input id="municipality" value="Tartu linn">
+              </div>
+              <div>
+                <label for="buildingType">Building type</label>
+                <select id="buildingType">
+                  <option>Apartment building</option>
+                  <option>Single-family house</option>
+                  <option>Public building</option>
+                  <option>Commercial building</option>
+                </select>
+              </div>
+              <div>
+                <label for="constructionYear">Construction year</label>
+                <input id="constructionYear" type="number" value="1983">
+              </div>
+              <div>
+                <label for="floors">Floors</label>
+                <input id="floors" type="number" value="5">
+              </div>
+              <div>
+                <label for="netArea">Net area m2</label>
+                <input id="netArea" type="number" value="2850">
+              </div>
+              <div>
+                <label for="volume">Volume m3</label>
+                <input id="volume" type="number" value="42750">
+              </div>
+              <div>
+                <label for="footprint">Footprint m2</label>
+                <input id="footprint" type="number" value="620">
+              </div>
+              <div>
+                <label for="height">Height m</label>
+                <input id="height" type="number" value="15">
+              </div>
+            </div>
+
+            <div>
+              <label>Energy label</label>
+              <div id="energyLabels" class="energy-labels"></div>
+            </div>
+
+            <div class="range-row">
+              <div class="range-label">
+                <label for="winterBaseline">Winter baseline</label>
+                <output id="winterOutput">100%</output>
+              </div>
+              <input id="winterBaseline" type="range" min="70" max="130" step="1" value="100">
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Energy Inputs</h2>
+            <span class="badge amber">Editable</span>
+          </div>
+          <div class="panel-body form-grid">
+            <div class="full">
+              <label for="currentSystem">Current heating source</label>
+              <select id="currentSystem">
+                <option value="districtHeating">District heating</option>
+                <option value="naturalGas">Gas boiler</option>
+                <option value="electricity">Direct electric</option>
+              </select>
+            </div>
+            <div class="full">
+              <label for="targetSystem">Target heating system</label>
+              <select id="targetSystem">
+                <option value="airWater">Air-to-water heat pump</option>
+                <option value="groundSource">Ground-source heat pump</option>
+                <option value="districtHeating">District heating</option>
+              </select>
+            </div>
+            <div>
+              <label for="electricityPrice">Electricity EUR/kWh</label>
+              <input id="electricityPrice" type="number" step="0.001" value="0.18">
+            </div>
+            <div>
+              <label for="districtPrice">District heat EUR/kWh</label>
+              <input id="districtPrice" type="number" step="0.001" value="0.08">
+            </div>
+            <div>
+              <label for="gasPrice">Gas EUR/kWh</label>
+              <input id="gasPrice" type="number" step="0.001" value="0.07">
+            </div>
+            <div>
+              <label for="customDemand">Known heat demand kWh</label>
+              <input id="customDemand" type="number" value="0">
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <main class="stack">
+        <section class="dashboard">
+          <div class="metric">
+            <strong id="demandIntensity">-</strong>
+            <span>Heat demand intensity kWh/m2/year</span>
+          </div>
+          <div class="metric">
+            <strong id="currentBill">-</strong>
+            <span>Current annual heating bill</span>
+          </div>
+          <div class="metric">
+            <strong id="newBill">-</strong>
+            <span>New annual heating bill</span>
+          </div>
+          <div class="metric">
+            <strong id="payback">-</strong>
+            <span>Heating upgrade payback</span>
+          </div>
+        </section>
+
+        <section class="grid-2">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Heating Upgrade Outputs</h2>
+              <span class="badge green">Calculated</span>
+            </div>
+            <div class="panel-body">
+              <div class="grid-3">
+                <div class="kv-row"><span>Annual demand</span><strong id="annualDemand">-</strong></div>
+                <div class="kv-row"><span>Current energy input</span><strong id="currentInput">-</strong></div>
+                <div class="kv-row"><span>New energy input</span><strong id="newInput">-</strong></div>
+                <div class="kv-row"><span>Annual savings</span><strong id="annualSavings">-</strong></div>
+                <div class="kv-row"><span>Carbon savings</span><strong id="carbonSavings">-</strong></div>
+                <div class="kv-row"><span>Investment cost</span><strong id="investmentCost">-</strong></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Batch Location Tests</h2>
+              <span class="badge">Optional</span>
+            </div>
+            <div class="panel-body">
+              <textarea id="batchAddresses">Vaksali 17, Tartu
+Mai 23, Parnu
+Koidu 42, Tallinn</textarea>
+              <button id="batchBtn" type="button">Check addresses</button>
+              <div id="batchResults" class="batch-results"></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Building Renovation Inputs</h2>
+            <span class="badge amber">Editable</span>
+          </div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <div>
+                <label for="renovationTarget">Renovation package</label>
+                <select id="renovationTarget">
+                  <option value="light">Light envelope tune-up</option>
+                  <option value="c">Deep renovation to class C</option>
+                  <option value="b" selected>Deep renovation to class B</option>
+                  <option value="a">Near-zero renovation to class A</option>
+                </select>
+              </div>
+              <div>
+                <label for="extraCostM2">Extra custom cost EUR/m2</label>
+                <input id="extraCostM2" type="number" value="0">
+              </div>
+              <div class="range-row">
+                <div class="range-label">
+                  <label for="grantPercent">Grant support</label>
+                  <output id="grantOutput">50%</output>
+                </div>
+                <input id="grantPercent" type="range" min="0" max="70" step="1" value="50">
+              </div>
+              <div class="range-row">
+                <div class="range-label">
+                  <label for="loanRate">Loan interest</label>
+                  <output id="loanRateOutput">4.2%</output>
+                </div>
+                <input id="loanRate" type="range" min="0" max="9" step="0.1" value="4.2">
+              </div>
+              <div class="range-row full">
+                <div class="range-label">
+                  <label for="loanTerm">Loan term</label>
+                  <output id="loanTermOutput">20 years</output>
+                </div>
+                <input id="loanTerm" type="range" min="5" max="30" step="1" value="20">
+              </div>
+            </div>
+
+            <div class="measure-grid">
+              <label class="measure"><input data-measure="facade" type="checkbox" checked><span>Factory facade insulation</span></label>
+              <label class="measure"><input data-measure="roof" type="checkbox" checked><span>Raised or insulated roof</span></label>
+              <label class="measure"><input data-measure="windows" type="checkbox" checked><span>Windows and opening changes</span></label>
+              <label class="measure"><input data-measure="ventilation" type="checkbox" checked><span>Ventilation heat recovery</span></label>
+              <label class="measure"><input data-measure="pvBattery" type="checkbox"><span>PV roof and battery</span></label>
+              <label class="measure"><input data-measure="balconies" type="checkbox"><span>Balconies, terraces, lifts</span></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid-2">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Renovation Outputs</h2>
+              <span class="badge green">Calculated</span>
+            </div>
+            <div class="panel-body kv">
+              <div class="result-row"><span>Gross renovation cost</span><strong id="renovationGross">-</strong></div>
+              <div class="result-row"><span>Grant amount</span><strong id="renovationGrant">-</strong></div>
+              <div class="result-row"><span>Net owner cost</span><strong id="renovationNet">-</strong></div>
+              <div class="result-row"><span>Demand reduction</span><strong id="renovationReduction">-</strong></div>
+              <div class="result-row"><span>Renovated demand</span><strong id="renovationDemand">-</strong></div>
+              <div class="result-row"><span>Energy class path</span><strong id="classPath">-</strong></div>
+              <div class="result-row"><span>Renovation payback</span><strong id="renovationPayback">-</strong></div>
+              <div class="result-row"><span>Monthly loan service</span><strong id="monthlyLoan">-</strong></div>
+              <div class="result-row"><span>Bill after renovation</span><strong id="renovatedBill">-</strong></div>
+              <div class="result-row"><span>Renovation + heating bill</span><strong id="combinedBill">-</strong></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Cost Comparison</h2>
+              <span class="badge">Chart</span>
+            </div>
+            <div class="panel-body bar-list">
+              <div>
+                <div class="bar-label"><span>Current bill</span><strong id="barCurrentText">-</strong></div>
+                <div class="bar-track"><div id="barCurrent" class="bar amber"></div></div>
+              </div>
+              <div>
+                <div class="bar-label"><span>After renovation</span><strong id="barRenovatedText">-</strong></div>
+                <div class="bar-track"><div id="barRenovated" class="bar"></div></div>
+              </div>
+              <div>
+                <div class="bar-label"><span>Renovation + heating upgrade</span><strong id="barCombinedText">-</strong></div>
+                <div class="bar-track"><div id="barCombined" class="bar blue"></div></div>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const INADS_URL = "https://inaadress.maaamet.ee/inaadress/gazetteer";
+    const ENERGY_LABEL_DEMAND = { A: 45, B: 75, C: 95, D: 130, E: 180, F: 220, G: 260, H: 320 };
+    const EMISSIONS = { electricity: 0.35, districtHeating: 0.11, naturalGas: 0.202 };
+    const SYSTEMS = {
+      districtHeating: { label: "District heating", scop: 0.95, energyType: "districtHeating", installCost: 5000 },
+      naturalGas: { label: "Gas boiler", scop: 0.88, energyType: "naturalGas", installCost: 0 },
+      electricity: { label: "Direct electric", scop: 1, energyType: "electricity", installCost: 0 },
+      airWater: { label: "Air-to-water heat pump", scop: 3.4, energyType: "electricity", installCost: 8500 },
+      groundSource: { label: "Ground-source heat pump", scop: 4.2, energyType: "electricity", installCost: 13000 },
+    };
+    const RENOVATION_PACKAGES = {
+      light: { label: "Light envelope tune-up", targetClass: "D/C", demandReduction: 0.18, costPerM2: 120 },
+      c: { label: "Deep renovation to class C", targetClass: "C", demandReduction: 0.35, costPerM2: 260 },
+      b: { label: "Deep renovation to class B", targetClass: "B", demandReduction: 0.5, costPerM2: 420 },
+      a: { label: "Near-zero renovation to class A", targetClass: "A", demandReduction: 0.62, costPerM2: 620 },
+    };
+    const RENOVATION_MEASURES = {
+      facade: { costPerM2: 160, demandReduction: 0.2 },
+      roof: { costPerM2: 70, demandReduction: 0.08 },
+      windows: { costPerM2: 95, demandReduction: 0.1 },
+      ventilation: { costPerM2: 120, demandReduction: 0.15 },
+      pvBattery: { costPerM2: 0, demandReduction: 0 },
+      balconies: { costPerM2: 85, demandReduction: 0 },
+    };
+    const SAMPLES = {
+      "vaksali 17": {
+        address: "Vaksali 17, Tartu",
+        municipality: "Tartu linn",
+        ehr: "104016706",
+        year: 1983,
+        area: 2850,
+        volume: 42750,
+        footprint: 620,
+        height: 15,
+        label: "D",
+        system: "districtHeating",
+        lat: 58.372612,
+        lon: 26.709876,
+        adsOid: "ME00750651",
+        adrId: "3062467",
+      },
+      "mai 23": {
+        address: "Mai 23, Parnu",
+        municipality: "Parnu linn",
+        ehr: "103021882",
+        year: 1978,
+        area: 4120,
+        volume: 59800,
+        footprint: 880,
+        height: 18,
+        label: "E",
+        system: "districtHeating",
+        lat: 58.37193,
+        lon: 24.534157,
+        adsOid: "EE00704868",
+        adrId: "3099999",
+      },
+      "koidu 42": {
+        address: "Koidu 42, Tallinn",
+        municipality: "Tallinna linn",
+        ehr: "101030612",
+        year: 1965,
+        area: 1860,
+        volume: 24800,
+        footprint: 420,
+        height: 13,
+        label: "F",
+        system: "naturalGas",
+        lat: 59.4292,
+        lon: 24.7346,
+        adsOid: "-",
+        adrId: "-",
+      },
+    };
+
+    let selectedLabel = "D";
+
+    const byId = (id) => document.getElementById(id);
+    const euro = (value) => new Intl.NumberFormat("en-EE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
+    const num = (value, digits = 0) => new Intl.NumberFormat("en-EE", { maximumFractionDigits: digits }).format(value);
+    const val = (id) => Number(byId(id).value) || 0;
+
+    function initLabels() {
+      byId("energyLabels").innerHTML = Object.keys(ENERGY_LABEL_DEMAND).map((label) => (
+        `<button type="button" class="label-btn ${label === selectedLabel ? "active" : ""}" data-label="${label}">${label}</button>`
+      )).join("");
+      byId("energyLabels").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-label]");
+        if (!button) return;
+        selectedLabel = button.dataset.label;
+        document.querySelectorAll(".label-btn").forEach((item) => item.classList.toggle("active", item === button));
+        calculate();
+      });
+    }
+
+    function tariffs() {
+      return {
+        electricity: val("electricityPrice"),
+        districtHeating: val("districtPrice"),
+        naturalGas: val("gasPrice"),
+      };
+    }
+
+    function heatingScenario() {
+      const area = Math.max(val("netArea"), 1);
+      const winter = val("winterBaseline") / 100;
+      const knownDemand = val("customDemand");
+      const demand = knownDemand > 0 ? knownDemand : area * ENERGY_LABEL_DEMAND[selectedLabel] * winter;
+      const current = SYSTEMS[byId("currentSystem").value];
+      const target = SYSTEMS[byId("targetSystem").value];
+      const prices = tariffs();
+      const currentInput = demand / current.scop;
+      const newInput = demand / target.scop;
+      const currentCost = currentInput * prices[current.energyType];
+      const newCost = newInput * prices[target.energyType];
+      const savings = currentCost - newCost;
+      const carbonSavingsKg = (currentInput * EMISSIONS[current.energyType]) - (newInput * EMISSIONS[target.energyType]);
+      const payback = savings > 0 ? target.installCost / savings : Infinity;
+      return { area, demand, currentInput, newInput, currentCost, newCost, savings, carbonSavingsKg, payback, installCost: target.installCost };
+    }
+
+    function selectedMeasures() {
+      return Array.from(document.querySelectorAll("[data-measure]:checked")).map((input) => input.dataset.measure);
+    }
+
+    function pvBatteryCost(area) {
+      const pvKw = Math.max(4, Math.min(63, area * 0.12));
+      const batteryKwh = Math.max(5, Math.min(30, pvKw * 0.5));
+      return Math.round(((pvKw * 650 * 1.22) + (batteryKwh * 350 * 1.22)) / 1000) * 1000;
+    }
+
+    function monthlyPayment(principal, annualRate, years) {
+      if (principal <= 0 || years <= 0) return 0;
+      const monthlyRate = annualRate / 12;
+      const months = years * 12;
+      if (monthlyRate === 0) return principal / months;
+      return principal * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
+    }
+
+    function renovationScenario(heat) {
+      const area = heat.area;
+      const packageConfig = RENOVATION_PACKAGES[byId("renovationTarget").value];
+      const measures = selectedMeasures();
+      const additiveReduction = measures.reduce((sum, key) => sum + RENOVATION_MEASURES[key].demandReduction, 0);
+      const demandReduction = Math.min(0.78, packageConfig.demandReduction + additiveReduction * 0.45);
+      const basePackageCost = area * packageConfig.costPerM2;
+      const measureCost = measures.reduce((sum, key) => {
+        if (key === "pvBattery") return sum + pvBatteryCost(area);
+        return sum + area * RENOVATION_MEASURES[key].costPerM2;
+      }, 0);
+      const grossInvestment = basePackageCost + measureCost + area * val("extraCostM2");
+      const grantAmount = grossInvestment * (val("grantPercent") / 100);
+      const netInvestment = Math.max(0, grossInvestment - grantAmount);
+      const renovatedDemand = heat.demand * (1 - demandReduction);
+      const envelopeBill = heat.currentCost * (1 - demandReduction);
+      const pvOffset = measures.includes("pvBattery") ? Math.min(envelopeBill * 0.32, area * 0.12 * 850 * val("electricityPrice")) : 0;
+      const renovatedBill = Math.max(0, envelopeBill - pvOffset);
+      const renovationSavings = Math.max(0, heat.currentCost - renovatedBill);
+      const payback = renovationSavings > 0 ? netInvestment / renovationSavings : Infinity;
+      const combinedBill = Math.max(0, heat.newCost * (1 - demandReduction) - pvOffset * 0.65);
+      const combinedSavings = Math.max(0, heat.currentCost - combinedBill);
+      const monthlyLoan = monthlyPayment(netInvestment, val("loanRate") / 100, val("loanTerm"));
+      return {
+        packageConfig,
+        demandReduction,
+        grossInvestment,
+        grantAmount,
+        netInvestment,
+        renovatedDemand,
+        renovatedBill,
+        renovationSavings,
+        payback,
+        combinedBill,
+        combinedSavings,
+        monthlyLoan,
+      };
+    }
+
+    function setBar(id, ratio) {
+      byId(id).style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
+    }
+
+    function calculate() {
+      byId("winterOutput").textContent = `${num(val("winterBaseline"), 0)}%`;
+      byId("grantOutput").textContent = `${num(val("grantPercent"), 0)}%`;
+      byId("loanRateOutput").textContent = `${num(val("loanRate"), 1)}%`;
+      byId("loanTermOutput").textContent = `${num(val("loanTerm"), 0)} years`;
+
+      const heat = heatingScenario();
+      const reno = renovationScenario(heat);
+      byId("demandIntensity").textContent = num(heat.demand / heat.area, 0);
+      byId("currentBill").textContent = euro(heat.currentCost);
+      byId("newBill").textContent = euro(heat.newCost);
+      byId("payback").textContent = Number.isFinite(heat.payback) ? `${num(heat.payback, 1)} yrs` : "No payback";
+      byId("annualDemand").textContent = `${num(heat.demand, 0)} kWh/year`;
+      byId("currentInput").textContent = `${num(heat.currentInput, 0)} kWh/year`;
+      byId("newInput").textContent = `${num(heat.newInput, 0)} kWh/year`;
+      byId("annualSavings").textContent = euro(heat.savings);
+      byId("carbonSavings").textContent = `${num(heat.carbonSavingsKg / 1000, 1)} tCO2/year`;
+      byId("investmentCost").textContent = euro(heat.installCost);
+
+      byId("renovationGross").textContent = euro(reno.grossInvestment);
+      byId("renovationGrant").textContent = euro(reno.grantAmount);
+      byId("renovationNet").textContent = euro(reno.netInvestment);
+      byId("renovationReduction").textContent = `${num(reno.demandReduction * 100, 0)}%`;
+      byId("renovationDemand").textContent = `${num(reno.renovatedDemand, 0)} kWh/year`;
+      byId("classPath").textContent = `${selectedLabel} -> ${reno.packageConfig.targetClass}`;
+      byId("renovationPayback").textContent = Number.isFinite(reno.payback) ? `${num(reno.payback, 1)} years` : "No payback";
+      byId("monthlyLoan").textContent = `${euro(reno.monthlyLoan)} / month`;
+      byId("renovatedBill").textContent = euro(reno.renovatedBill);
+      byId("combinedBill").textContent = euro(reno.combinedBill);
+
+      const maxBill = Math.max(heat.currentCost, reno.renovatedBill, reno.combinedBill, 1);
+      setBar("barCurrent", heat.currentCost / maxBill);
+      setBar("barRenovated", reno.renovatedBill / maxBill);
+      setBar("barCombined", reno.combinedBill / maxBill);
+      byId("barCurrentText").textContent = euro(heat.currentCost);
+      byId("barRenovatedText").textContent = `${euro(reno.renovatedBill)} (${euro(reno.renovationSavings)} saved)`;
+      byId("barCombinedText").textContent = `${euro(reno.combinedBill)} (${euro(reno.combinedSavings)} saved)`;
+    }
+
+    function loadSample(sample) {
+      byId("addressInput").value = sample.address;
+      byId("municipality").value = sample.municipality;
+      byId("ehrCode").textContent = sample.ehr;
+      byId("constructionYear").value = sample.year;
+      byId("netArea").value = sample.area;
+      byId("volume").value = sample.volume;
+      byId("footprint").value = sample.footprint;
+      byId("height").value = sample.height;
+      byId("currentSystem").value = sample.system;
+      byId("adsOid").textContent = sample.adsOid;
+      byId("adrId").textContent = sample.adrId;
+      byId("coords").textContent = `${sample.lat.toFixed(6)}, ${sample.lon.toFixed(6)}`;
+      selectedLabel = sample.label;
+      document.querySelectorAll(".label-btn").forEach((button) => button.classList.toggle("active", button.dataset.label === selectedLabel));
+      byId("status").textContent = `${sample.address} loaded. Adjust the inputs to test a renovation scenario.`;
+      calculate();
+    }
+
+    function findSample(text) {
+      const query = text.toLowerCase();
+      return Object.entries(SAMPLES).find(([key]) => query.includes(key))?.[1] || null;
+    }
+
+    async function lookupAddress() {
+      const address = byId("addressInput").value.trim();
+      const sample = findSample(address);
+      if (sample) {
+        loadSample(sample);
+      }
+      byId("lookupBtn").disabled = true;
+      byId("status").textContent = "Looking up official address...";
+      try {
+        const response = await fetch(`${INADS_URL}?address=${encodeURIComponent(address)}`);
+        if (!response.ok) throw new Error(`In-ADS returned ${response.status}`);
+        const payload = await response.json();
+        const record = Array.isArray(payload) ? payload[0] : payload;
+        if (!record) throw new Error("No address match");
+        byId("adsOid").textContent = record.ads_oid || "-";
+        byId("adrId").textContent = record.adr_id || "-";
+        const lat = Number(record.viitepunkt_b);
+        const lon = Number(record.viitepunkt_l);
+        byId("coords").textContent = Number.isFinite(lat) && Number.isFinite(lon) ? `${lat.toFixed(6)}, ${lon.toFixed(6)}` : "-";
+        byId("status").textContent = record.taisaadress || record.pikkaadress || "Official address matched.";
+      } catch (error) {
+        byId("status").textContent = sample ? "Sample loaded. Live browser lookup may be blocked until backend proxy is connected." : "Live lookup may be blocked. Use a sample or connect the backend proxy.";
+      } finally {
+        byId("lookupBtn").disabled = false;
+      }
+    }
+
+    function checkBatch() {
+      const rows = byId("batchAddresses").value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line) => {
+        const sample = findSample(line);
+        if (!sample) return `<div class="batch-row"><strong>Not matched</strong><span>${line}</span></div>`;
+        return `<div class="batch-row"><strong>Matched</strong><span>${sample.address} - ${sample.lat.toFixed(6)}, ${sample.lon.toFixed(6)}</span></div>`;
+      });
+      byId("batchResults").innerHTML = rows.join("");
+    }
+
+    initLabels();
+    document.querySelectorAll("input, select").forEach((item) => {
+      item.addEventListener("input", calculate);
+      item.addEventListener("change", calculate);
+    });
+    document.querySelectorAll("[data-measure]").forEach((item) => item.addEventListener("change", calculate));
+    byId("lookupBtn").addEventListener("click", lookupAddress);
+    byId("sampleBtn").addEventListener("click", () => loadSample(SAMPLES["vaksali 17"]));
+    byId("batchBtn").addEventListener("click", checkBatch);
+    loadSample(SAMPLES["vaksali 17"]);
+    checkBatch();
+  </script>
+</body>
+</html>

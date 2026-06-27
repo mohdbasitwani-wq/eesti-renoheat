@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eesti RenoHeat Explorer</title>
+  <style>
+    :root {
+      --ink: #17211f;
+      --muted: #60706a;
+      --line: #dbe3df;
+      --panel: #ffffff;
+      --page: #eef3f0;
+      --green: #2f7150;
+      --green-dark: #24593f;
+      --blue: #2d5d8f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      background: var(--page);
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      z-index: 2;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    a {
+      font: inherit;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #fff;
+      background: var(--green);
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .button:hover {
+      background: var(--green-dark);
+    }
+
+    .button.secondary {
+      color: var(--ink);
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 0;
+      padding: 0;
+    }
+
+    .pane-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      min-height: 42px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fbf9;
+    }
+
+    .pane-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 900;
+      color: #2e403b;
+    }
+
+    .badge {
+      display: inline-flex;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 3px 8px;
+      color: #fff;
+      background: var(--blue);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: 0;
+      background: #fff;
+    }
+
+    @media (max-width: 760px) {
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .button {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Eesti RenoHeat Explorer</h1>
+        <p class="subtitle">Full calculator on this page. Open the MaaRuum 3D building view separately when needed.</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="index-maaruum-3d.html" target="_blank" rel="noreferrer">Open 3D view</a>
+        <a class="button secondary" href="index-map-visible-osm.html">Open map version</a>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <div class="pane-head">
+        <p class="pane-title">Calculator</p>
+        <span class="badge">Inputs + outputs</span>
+      </div>
+      <iframe title="Full heating and renovation calculator" src="index-full-calculator-clean.html"></iframe>
+    </main>
+  </div>
+</body>
+</html>

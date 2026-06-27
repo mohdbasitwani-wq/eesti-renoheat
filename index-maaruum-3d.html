@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eesti RenoHeat 3D</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.18/esri/themes/light/main.css">
+  <style>
+    :root {
+      --ink: #17211f;
+      --muted: #5b6763;
+      --line: #d8e0dc;
+      --panel: #ffffff;
+      --green: #2f7150;
+      --blue: #2d5d8f;
+      --amber: #b7791f;
+      --bg: #eef3f0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+      width: 100%;
+      height: 100%;
+    }
+
+    aside {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 20px;
+      overflow: auto;
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 12px 0 24px rgba(23, 33, 31, 0.08);
+      z-index: 2;
+    }
+
+    main {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    #viewDiv {
+      position: absolute;
+      inset: 0;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle,
+    .note,
+    .status {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    label {
+      display: block;
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #30413c;
+      text-transform: uppercase;
+    }
+
+    textarea,
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 11px 12px;
+      color: var(--ink);
+      background: #f9fbfa;
+      font: inherit;
+      resize: vertical;
+    }
+
+    textarea {
+      min-height: 108px;
+    }
+
+    button,
+    a.button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: #fff;
+      background: var(--green);
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button.secondary,
+    a.button.secondary {
+      color: var(--ink);
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric {
+      min-height: 84px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 12px;
+      background: #f9fbfa;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .result {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 12px;
+      background: #f9fbfa;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .result-row span:first-child {
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 8px;
+      color: #fff;
+      background: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status {
+      min-height: 42px;
+      border-left: 3px solid var(--amber);
+      padding: 8px 0 8px 10px;
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(320px, 44vh) 1fr;
+      }
+
+      aside {
+        order: 2;
+        border-right: 0;
+        border-top: 1px solid var(--line);
+        box-shadow: 0 -12px 24px rgba(23, 33, 31, 0.08);
+      }
+
+      main {
+        order: 1;
+      }
+    }
+  </style>
+  <script src="https://js.arcgis.com/4.18/"></script>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <section class="brand">
+        <span class="badge">MaaRuum 3D</span>
+        <h1>Eesti RenoHeat 3D</h1>
+        <p class="subtitle">Real 3D building scene from Maa- ja Ruumiamet, paired with official In-ADS address lookup.</p>
+      </section>
+
+      <section>
+        <label for="addressInput">Building address</label>
+        <input id="addressInput" value="Vaksali 17, Tartu">
+      </section>
+
+      <div class="actions">
+        <button id="lookupBtn" type="button">Find address</button>
+        <a class="button secondary" href="https://3d.maaruum.ee/kaart/" target="_blank" rel="noreferrer">Open source</a>
+      </div>
+
+      <p id="status" class="status">Loading MaaRuum WebScene...</p>
+
+      <section class="metrics">
+        <div class="metric">
+          <strong id="lodMetric">LOD2</strong>
+          <span>Default national 3D building layer</span>
+        </div>
+        <div class="metric">
+          <strong id="fieldMetric">6+</strong>
+          <span>Useful join fields for the backend</span>
+        </div>
+      </section>
+
+      <section class="result" aria-live="polite">
+        <div class="result-row">
+          <span>ADS OID</span>
+          <strong id="adsOid">-</strong>
+        </div>
+        <div class="result-row">
+          <span>ADR ID</span>
+          <strong id="adrId">-</strong>
+        </div>
+        <div class="result-row">
+          <span>Coordinates</span>
+          <strong id="coords">-</strong>
+        </div>
+        <div class="result-row">
+          <span>Quality</span>
+          <strong id="quality">-</strong>
+        </div>
+      </section>
+
+      <p class="note">Use this page to view the official 3D context. Use ETAK/EHR in the backend for calculations.</p>
+    </aside>
+
+    <main>
+      <div id="viewDiv"></div>
+    </main>
+  </div>
+
+  <script>
+    const MAARUUM_SCENE_ID = "92d29869db444e28beab584f696b86c3";
+    const INADS_URL = "https://inaadress.maaamet.ee/inaadress/gazetteer";
+
+    const statusEl = document.getElementById("status");
+    const lookupBtn = document.getElementById("lookupBtn");
+    const addressInput = document.getElementById("addressInput");
+    const adsOidEl = document.getElementById("adsOid");
+    const adrIdEl = document.getElementById("adrId");
+    const coordsEl = document.getElementById("coords");
+    const qualityEl = document.getElementById("quality");
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+    }
+
+    require([
+      "esri/WebScene",
+      "esri/views/SceneView",
+      "esri/Graphic",
+      "esri/geometry/Point"
+    ], function(WebScene, SceneView, Graphic, Point) {
+      const scene = new WebScene({
+        portalItem: {
+          id: MAARUUM_SCENE_ID,
+          portal: {
+            url: "https://maaamet.maps.arcgis.com"
+          }
+        }
+      });
+
+      const view = new SceneView({
+        container: "viewDiv",
+        map: scene,
+        qualityProfile: "medium",
+        environment: {
+          atmosphereEnabled: true,
+          starsEnabled: false
+        }
+      });
+
+      view.when(function() {
+        setStatus("MaaRuum 3D scene loaded. Enter an address to fly to the building.");
+      }).catch(function(error) {
+        setStatus("The 3D scene did not load. Open the official MaaRuum link or check browser/WebGL access.");
+        console.error(error);
+      });
+
+      async function findAddress() {
+        const address = addressInput.value.trim();
+        if (!address) {
+          setStatus("Enter a building address first.");
+          return;
+        }
+
+        lookupBtn.disabled = true;
+        setStatus("Looking up official In-ADS address...");
+
+        try {
+          const response = await fetch(`${INADS_URL}?address=${encodeURIComponent(address)}`);
+          if (!response.ok) {
+            throw new Error(`In-ADS returned ${response.status}`);
+          }
+
+          const records = await response.json();
+          const record = Array.isArray(records) ? records[0] : records;
+          if (!record) {
+            throw new Error("No address match returned");
+          }
+
+          const x = Number(record.viitepunkt_x);
+          const y = Number(record.viitepunkt_y);
+          const lon = Number(record.viitepunkt_l);
+          const lat = Number(record.viitepunkt_b);
+
+          adsOidEl.textContent = record.ads_oid || "-";
+          adrIdEl.textContent = record.adr_id || "-";
+          coordsEl.textContent = Number.isFinite(lat) && Number.isFinite(lon)
+            ? `${lat.toFixed(6)}, ${lon.toFixed(6)}`
+            : "-";
+          qualityEl.textContent = record.kvaliteet || "-";
+
+          if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            throw new Error("In-ADS did not return L-EST97 coordinates");
+          }
+
+          const point = new Point({
+            x,
+            y,
+            z: 180,
+            spatialReference: {
+              wkid: 3301,
+              vcsWkid: 5621
+            }
+          });
+
+          view.graphics.removeAll();
+          view.graphics.add(new Graphic({
+            geometry: point,
+            symbol: {
+              type: "point-3d",
+              symbolLayers: [{
+                type: "object",
+                resource: { primitive: "inverted-cone" },
+                width: 18,
+                height: 42,
+                depth: 18,
+                material: { color: "#2d5d8f" }
+              }],
+              verticalOffset: {
+                screenLength: 40,
+                maxWorldLength: 90,
+                minWorldLength: 20
+              },
+              callout: {
+                type: "line",
+                color: "#2d5d8f",
+                size: 1.5
+              }
+            }
+          }));
+
+          await view.goTo({
+            target: point,
+            tilt: 68,
+            heading: 320,
+            zoom: 18
+          }, { duration: 1800 });
+
+          setStatus(`Matched ${record.taisaadress || record.pikkaadress || address}`);
+        } catch (error) {
+          setStatus("Could not complete live address lookup from this page. The backend proxy can solve this if CORS blocks the browser.");
+          console.error(error);
+        } finally {
+          lookupBtn.disabled = false;
+        }
+      }
+
+      lookupBtn.addEventListener("click", findAddress);
+      addressInput.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+          findAddress();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

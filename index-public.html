@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eesti RenoHeat Explorer</title>
+  <style>
+    :root {
+      --ink: #16211f;
+      --muted: #62706b;
+      --line: #dbe3df;
+      --panel: #ffffff;
+      --page: #edf3ef;
+      --soft: #f7faf8;
+      --green: #2f7150;
+      --green-dark: #24593f;
+      --blue: #2d5d8f;
+      --amber: #b7791f;
+      --red: #a4443d;
+      --shadow: 0 12px 28px rgba(22, 33, 31, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background: var(--page);
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+
+    button,
+    input,
+    select,
+    a { font: inherit; }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .button,
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 9px 13px;
+      color: #fff;
+      background: var(--green);
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .button:hover,
+    button:hover { background: var(--green-dark); }
+
+    .button.secondary,
+    button.secondary {
+      color: var(--ink);
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(340px, 430px) minmax(0, 1fr);
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      background: var(--soft);
+    }
+
+    .panel-body {
+      display: grid;
+      gap: 14px;
+      padding: 15px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      color: #fff;
+      background: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .badge.green { background: var(--green); }
+    .badge.amber { background: var(--amber); }
+
+    label {
+      display: block;
+      margin: 0 0 6px;
+      color: #30413c;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--green);
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .status {
+      min-height: 38px;
+      border-left: 3px solid var(--amber);
+      padding: 8px 0 8px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .status.ok { border-left-color: var(--green); }
+    .status.bad { border-left-color: var(--red); }
+
+    .results {
+      display: grid;
+      gap: 8px;
+      max-height: 350px;
+      overflow: auto;
+    }
+
+    .result {
+      display: grid;
+      gap: 4px;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      color: var(--ink);
+      background: #fff;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .result:hover,
+    .result.active {
+      border-color: var(--green);
+      background: #f1f7f3;
+    }
+
+    .result strong { font-size: 14px; }
+
+    .result span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .kv {
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .kv-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #edf1ef;
+      padding-bottom: 8px;
+    }
+
+    .kv-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .kv-row span:first-child { color: var(--muted); }
+    .kv-row strong { text-align: right; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      min-height: 108px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 25px;
+      line-height: 1.05;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .energy-labels,
+    .measure-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .label-btn {
+      min-height: 36px;
+      padding: 6px 0;
+      border-color: var(--line);
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .label-btn.active {
+      color: #fff;
+      background: var(--green);
+    }
+
+    .measure {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      background: #fff;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .measure input {
+      width: 18px;
+      min-height: 18px;
+      margin: 1px 0 0;
+    }
+
+    .range-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    output {
+      color: var(--green-dark);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .bar-track {
+      height: 12px;
+      border-radius: 999px;
+      background: #edf1ef;
+      overflow: hidden;
+    }
+
+    .bar {
+      width: 0;
+      height: 100%;
+      border-radius: 999px;
+      background: var(--green);
+      transition: width 160ms ease;
+    }
+
+    .bar.blue { background: var(--blue); }
+    .bar.amber { background: var(--amber); }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      padding: 10px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    @media (max-width: 1120px) {
+      .layout,
+      .grid-2,
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      header,
+      .form-grid,
+      .measure-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .layout {
+        padding: 12px;
+      }
+
+      .actions,
+      .search-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Eesti RenoHeat Explorer</h1>
+      <p class="subtitle">Find a real building, add the missing project details, and estimate heating and renovation impact.</p>
+    </div>
+    <div class="actions">
+      <a class="button" href="index-maaruum-3d.html" target="_blank" rel="noreferrer">Open 3D view</a>
+      <a class="button secondary" href="index-map-visible-osm.html">Open map</a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="stack">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Find Building</h2>
+          <span class="badge">Real ETAK search</span>
+        </div>
+        <div class="panel-body">
+          <p id="apiStatus" class="status">Checking local building search...</p>
+          <div>
+            <label for="searchInput">Address or building identifier</label>
+            <div class="search-row">
+              <input id="searchInput" value="Vaksali 17" autocomplete="off">
+              <button id="searchBtn" type="button">Search</button>
+            </div>
+          </div>
+          <div id="results" class="results" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Selected Building</h2>
+          <span class="badge green">Auto-filled</span>
+        </div>
+        <div class="panel-body">
+          <div class="kv">
+            <div class="kv-row"><span>Address</span><strong id="selAddress">-</strong></div>
+            <div class="kv-row"><span>Building type</span><strong id="selType">-</strong></div>
+            <div class="kv-row"><span>Height</span><strong id="selHeight">-</strong></div>
+          </div>
+          <details>
+            <summary>Building reference details</summary>
+            <div class="kv" style="margin-top:10px">
+              <div class="kv-row"><span>ETAK ID</span><strong id="selEtak">-</strong></div>
+              <div class="kv-row"><span>EHR GID</span><strong id="selEhr">-</strong></div>
+              <div class="kv-row"><span>ADS OID</span><strong id="selAds">-</strong></div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Required User Inputs</h2>
+          <span class="badge amber">Editable</span>
+        </div>
+        <div class="panel-body form-grid">
+          <div>
+            <label for="constructionYear">Construction year</label>
+            <input id="constructionYear" type="number" value="1983">
+          </div>
+          <div>
+            <label for="netArea">Net area m2</label>
+            <input id="netArea" type="number" value="2850">
+          </div>
+          <div>
+            <label for="floors">Floors</label>
+            <input id="floors" type="number" value="5">
+          </div>
+          <div>
+            <label for="currentSystem">Current heat source</label>
+            <select id="currentSystem">
+              <option value="districtHeating">District heating</option>
+              <option value="naturalGas">Gas boiler</option>
+              <option value="electricity">Direct electric</option>
+            </select>
+          </div>
+          <div class="full">
+            <label>Energy label</label>
+            <div id="energyLabels" class="energy-labels"></div>
+          </div>
+          <div class="full">
+            <label for="knownDemand">Known annual heat demand kWh, if available</label>
+            <input id="knownDemand" type="number" value="0">
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <main class="stack">
+      <section class="dashboard">
+        <div class="metric">
+          <strong id="currentBill">-</strong>
+          <span>Current annual heating bill</span>
+        </div>
+        <div class="metric">
+          <strong id="newBill">-</strong>
+          <span>New annual heating bill</span>
+        </div>
+        <div class="metric">
+          <strong id="annualSavings">-</strong>
+          <span>Annual savings after heating upgrade</span>
+        </div>
+        <div class="metric">
+          <strong id="renovationPayback">-</strong>
+          <span>Renovation payback</span>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Heating Upgrade</h2>
+            <span class="badge amber">Editable</span>
+          </div>
+          <div class="panel-body form-grid">
+            <div class="full">
+              <label for="targetSystem">Target heating system</label>
+              <select id="targetSystem">
+                <option value="airWater">Air-to-water heat pump</option>
+                <option value="groundSource">Ground-source heat pump</option>
+                <option value="districtHeating">District heating</option>
+              </select>
+            </div>
+            <div>
+              <label for="electricityPrice">Electricity EUR/kWh</label>
+              <input id="electricityPrice" type="number" step="0.001" value="0.18">
+            </div>
+            <div>
+              <label for="districtPrice">District heat EUR/kWh</label>
+              <input id="districtPrice" type="number" step="0.001" value="0.08">
+            </div>
+            <div>
+              <label for="gasPrice">Gas EUR/kWh</label>
+              <input id="gasPrice" type="number" step="0.001" value="0.07">
+            </div>
+            <div class="kv-row"><span>Annual demand</span><strong id="annualDemand">-</strong></div>
+            <div class="kv-row"><span>CO2 savings</span><strong id="carbonSavings">-</strong></div>
+            <div class="kv-row"><span>Upgrade cost</span><strong id="upgradeCost">-</strong></div>
+            <div class="kv-row"><span>Upgrade payback</span><strong id="upgradePayback">-</strong></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Building Renovation</h2>
+            <span class="badge amber">Editable</span>
+          </div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <div>
+                <label for="renovationTarget">Renovation package</label>
+                <select id="renovationTarget">
+                  <option value="light">Light envelope tune-up</option>
+                  <option value="c">Deep renovation to class C</option>
+                  <option value="b" selected>Deep renovation to class B</option>
+                  <option value="a">Near-zero renovation to class A</option>
+                </select>
+              </div>
+              <div>
+                <label for="extraCostM2">Extra project cost EUR/m2</label>
+                <input id="extraCostM2" type="number" value="0">
+              </div>
+              <div>
+                <div class="range-label">
+                  <label for="grantPercent">Grant support</label>
+                  <output id="grantOutput">50%</output>
+                </div>
+                <input id="grantPercent" type="range" min="0" max="70" step="1" value="50">
+              </div>
+              <div>
+                <div class="range-label">
+                  <label for="loanRate">Loan interest</label>
+                  <output id="loanRateOutput">4.2%</output>
+                </div>
+                <input id="loanRate" type="range" min="0" max="9" step="0.1" value="4.2">
+              </div>
+              <div class="full">
+                <div class="range-label">
+                  <label for="loanTerm">Loan term</label>
+                  <output id="loanTermOutput">20 years</output>
+                </div>
+                <input id="loanTerm" type="range" min="5" max="30" step="1" value="20">
+              </div>
+            </div>
+            <div class="measure-grid">
+              <label class="measure"><input data-measure="facade" type="checkbox" checked><span>Facade insulation</span></label>
+              <label class="measure"><input data-measure="roof" type="checkbox" checked><span>Roof insulation</span></label>
+              <label class="measure"><input data-measure="windows" type="checkbox" checked><span>Windows</span></label>
+              <label class="measure"><input data-measure="ventilation" type="checkbox" checked><span>Ventilation recovery</span></label>
+              <label class="measure"><input data-measure="pvBattery" type="checkbox"><span>PV and battery</span></label>
+              <label class="measure"><input data-measure="balconies" type="checkbox"><span>Balconies/lifts</span></label>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="grid-2">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Renovation Results</h2>
+            <span class="badge green">Calculated</span>
+          </div>
+          <div class="panel-body kv">
+            <div class="kv-row"><span>Gross renovation cost</span><strong id="renovationGross">-</strong></div>
+            <div class="kv-row"><span>Grant amount</span><strong id="renovationGrant">-</strong></div>
+            <div class="kv-row"><span>Net owner cost</span><strong id="renovationNet">-</strong></div>
+            <div class="kv-row"><span>Demand reduction</span><strong id="renovationReduction">-</strong></div>
+            <div class="kv-row"><span>Renovated demand</span><strong id="renovationDemand">-</strong></div>
+            <div class="kv-row"><span>Monthly loan service</span><strong id="monthlyLoan">-</strong></div>
+            <div class="kv-row"><span>Bill after renovation</span><strong id="renovatedBill">-</strong></div>
+            <div class="kv-row"><span>Renovation + heating bill</span><strong id="combinedBill">-</strong></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Cost Comparison</h2>
+            <span class="badge">Chart</span>
+          </div>
+          <div class="panel-body bar-list">
+            <div>
+              <div class="bar-label"><span>Current bill</span><strong id="barCurrentText">-</strong></div>
+              <div class="bar-track"><div id="barCurrent" class="bar amber"></div></div>
+            </div>
+            <div>
+              <div class="bar-label"><span>After renovation</span><strong id="barRenovatedText">-</strong></div>
+              <div class="bar-track"><div id="barRenovated" class="bar"></div></div>
+            </div>
+            <div>
+              <div class="bar-label"><span>Renovation + heating upgrade</span><strong id="barCombinedText">-</strong></div>
+              <div class="bar-track"><div id="barCombined" class="bar blue"></div></div>
+            </div>
+            <p class="status ok">Building match is real. Energy and renovation results are estimates based on the inputs on this page.</p>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8765";
+    const ENERGY_LABEL_DEMAND = { A: 45, B: 75, C: 95, D: 130, E: 180, F: 220, G: 260, H: 320 };
+    const EMISSIONS = { electricity: 0.35, districtHeating: 0.11, naturalGas: 0.202 };
+    const SYSTEMS = {
+      districtHeating: { scop: 0.95, energyType: "districtHeating", installCost: 5000 },
+      naturalGas: { scop: 0.88, energyType: "naturalGas", installCost: 0 },
+      electricity: { scop: 1, energyType: "electricity", installCost: 0 },
+      airWater: { scop: 3.4, energyType: "electricity", installCost: 8500 },
+      groundSource: { scop: 4.2, energyType: "electricity", installCost: 13000 },
+    };
+    const RENOVATION_PACKAGES = {
+      light: { targetClass: "D/C", demandReduction: 0.18, costPerM2: 120 },
+      c: { targetClass: "C", demandReduction: 0.35, costPerM2: 260 },
+      b: { targetClass: "B", demandReduction: 0.5, costPerM2: 420 },
+      a: { targetClass: "A", demandReduction: 0.62, costPerM2: 620 },
+    };
+    const RENOVATION_MEASURES = {
+      facade: { costPerM2: 160, demandReduction: 0.2 },
+      roof: { costPerM2: 70, demandReduction: 0.08 },
+      windows: { costPerM2: 95, demandReduction: 0.1 },
+      ventilation: { costPerM2: 120, demandReduction: 0.15 },
+      pvBattery: { costPerM2: 0, demandReduction: 0 },
+      balconies: { costPerM2: 85, demandReduction: 0 },
+    };
+
+    let selectedLabel = "D";
+    const byId = (id) => document.getElementById(id);
+    const euro = (value) => new Intl.NumberFormat("en-EE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
+    const num = (value, digits = 0) => new Intl.NumberFormat("en-EE", { maximumFractionDigits: digits }).format(value);
+    const val = (id) => Number(byId(id).value) || 0;
+
+    function initEnergyLabels() {
+      byId("energyLabels").innerHTML = Object.keys(ENERGY_LABEL_DEMAND).map((label) => (
+        `<button type="button" class="label-btn ${label === selectedLabel ? "active" : ""}" data-label="${label}">${label}</button>`
+      )).join("");
+      byId("energyLabels").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-label]");
+        if (!button) return;
+        selectedLabel = button.dataset.label;
+        document.querySelectorAll(".label-btn").forEach((item) => item.classList.toggle("active", item === button));
+        calculate();
+      });
+    }
+
+    function tariffs() {
+      return {
+        electricity: val("electricityPrice"),
+        districtHeating: val("districtPrice"),
+        naturalGas: val("gasPrice"),
+      };
+    }
+
+    function heatingScenario() {
+      const area = Math.max(val("netArea"), 1);
+      const knownDemand = val("knownDemand");
+      const demand = knownDemand > 0 ? knownDemand : area * ENERGY_LABEL_DEMAND[selectedLabel] * 0.95;
+      const current = SYSTEMS[byId("currentSystem").value];
+      const target = SYSTEMS[byId("targetSystem").value];
+      const prices = tariffs();
+      const currentInput = demand / current.scop;
+      const newInput = demand / target.scop;
+      const currentCost = currentInput * prices[current.energyType];
+      const newCost = newInput * prices[target.energyType];
+      const savings = currentCost - newCost;
+      const carbonSavingsKg = (currentInput * EMISSIONS[current.energyType]) - (newInput * EMISSIONS[target.energyType]);
+      const payback = savings > 0 ? target.installCost / savings : Infinity;
+      return { area, demand, currentCost, newCost, savings, carbonSavingsKg, payback, installCost: target.installCost };
+    }
+
+    function selectedMeasures() {
+      return Array.from(document.querySelectorAll("[data-measure]:checked")).map((input) => input.dataset.measure);
+    }
+
+    function pvBatteryCost(area) {
+      const pvKw = Math.max(4, Math.min(63, area * 0.12));
+      const batteryKwh = Math.max(5, Math.min(30, pvKw * 0.5));
+      return Math.round(((pvKw * 650 * 1.22) + (batteryKwh * 350 * 1.22)) / 1000) * 1000;
+    }
+
+    function monthlyPayment(principal, annualRate, years) {
+      if (principal <= 0 || years <= 0) return 0;
+      const monthlyRate = annualRate / 12;
+      const months = years * 12;
+      if (monthlyRate === 0) return principal / months;
+      return principal * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
+    }
+
+    function renovationScenario(heat) {
+      const area = heat.area;
+      const packageConfig = RENOVATION_PACKAGES[byId("renovationTarget").value];
+      const measures = selectedMeasures();
+      const additiveReduction = measures.reduce((sum, key) => sum + RENOVATION_MEASURES[key].demandReduction, 0);
+      const demandReduction = Math.min(0.78, packageConfig.demandReduction + additiveReduction * 0.45);
+      const basePackageCost = area * packageConfig.costPerM2;
+      const measureCost = measures.reduce((sum, key) => {
+        if (key === "pvBattery") return sum + pvBatteryCost(area);
+        return sum + area * RENOVATION_MEASURES[key].costPerM2;
+      }, 0);
+      const grossInvestment = basePackageCost + measureCost + area * val("extraCostM2");
+      const grantAmount = grossInvestment * (val("grantPercent") / 100);
+      const netInvestment = Math.max(0, grossInvestment - grantAmount);
+      const renovatedDemand = heat.demand * (1 - demandReduction);
+      const envelopeBill = heat.currentCost * (1 - demandReduction);
+      const pvOffset = measures.includes("pvBattery") ? Math.min(envelopeBill * 0.32, area * 0.12 * 850 * val("electricityPrice")) : 0;
+      const renovatedBill = Math.max(0, envelopeBill - pvOffset);
+      const renovationSavings = Math.max(0, heat.currentCost - renovatedBill);
+      const payback = renovationSavings > 0 ? netInvestment / renovationSavings : Infinity;
+      const combinedBill = Math.max(0, heat.newCost * (1 - demandReduction) - pvOffset * 0.65);
+      const monthlyLoan = monthlyPayment(netInvestment, val("loanRate") / 100, val("loanTerm"));
+      return { demandReduction, grossInvestment, grantAmount, netInvestment, renovatedDemand, renovatedBill, payback, combinedBill, monthlyLoan };
+    }
+
+    function setBar(id, ratio) {
+      byId(id).style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
+    }
+
+    function calculate() {
+      byId("grantOutput").textContent = `${num(val("grantPercent"), 0)}%`;
+      byId("loanRateOutput").textContent = `${num(val("loanRate"), 1)}%`;
+      byId("loanTermOutput").textContent = `${num(val("loanTerm"), 0)} years`;
+
+      const heat = heatingScenario();
+      const reno = renovationScenario(heat);
+      byId("currentBill").textContent = euro(heat.currentCost);
+      byId("newBill").textContent = euro(heat.newCost);
+      byId("annualSavings").textContent = euro(heat.savings);
+      byId("annualDemand").textContent = `${num(heat.demand, 0)} kWh/year`;
+      byId("carbonSavings").textContent = `${num(heat.carbonSavingsKg / 1000, 1)} tCO2/year`;
+      byId("upgradeCost").textContent = euro(heat.installCost);
+      byId("upgradePayback").textContent = Number.isFinite(heat.payback) ? `${num(heat.payback, 1)} years` : "No payback";
+
+      byId("renovationGross").textContent = euro(reno.grossInvestment);
+      byId("renovationGrant").textContent = euro(reno.grantAmount);
+      byId("renovationNet").textContent = euro(reno.netInvestment);
+      byId("renovationReduction").textContent = `${num(reno.demandReduction * 100, 0)}%`;
+      byId("renovationDemand").textContent = `${num(reno.renovatedDemand, 0)} kWh/year`;
+      byId("monthlyLoan").textContent = `${euro(reno.monthlyLoan)} / month`;
+      byId("renovatedBill").textContent = euro(reno.renovatedBill);
+      byId("combinedBill").textContent = euro(reno.combinedBill);
+      byId("renovationPayback").textContent = Number.isFinite(reno.payback) ? `${num(reno.payback, 1)} yrs` : "No payback";
+
+      const maxBill = Math.max(heat.currentCost, reno.renovatedBill, reno.combinedBill, 1);
+      setBar("barCurrent", heat.currentCost / maxBill);
+      setBar("barRenovated", reno.renovatedBill / maxBill);
+      setBar("barCombined", reno.combinedBill / maxBill);
+      byId("barCurrentText").textContent = euro(heat.currentCost);
+      byId("barRenovatedText").textContent = euro(reno.renovatedBill);
+      byId("barCombinedText").textContent = euro(reno.combinedBill);
+    }
+
+    function renderResults(rows) {
+      if (!rows.length) {
+        byId("results").innerHTML = '<div class="result"><strong>No building found</strong><span>Try a shorter address, ADS OID, EHR GID, or ETAK ID.</span></div>';
+        return;
+      }
+      byId("results").innerHTML = rows.map((row, index) => `
+        <button class="result" type="button" data-index="${index}">
+          <strong>${row.ads_lahiaa || "Unnamed building"}</strong>
+          <span>${row.tyyp_t || "Building"}${row.korgus_m ? ` · ${row.korgus_m} m` : ""}</span>
+          <span>ETAK ${row.etak_id || "-"} · EHR ${row.ehr_gid || "-"} · ADS ${row.ads_oid || "-"}</span>
+        </button>
+      `).join("");
+      [...document.querySelectorAll("[data-index]")].forEach((button) => {
+        button.addEventListener("click", () => selectBuilding(rows[Number(button.dataset.index)]));
+      });
+      selectBuilding(rows[0]);
+    }
+
+    function selectBuilding(row) {
+      document.querySelectorAll("[data-index]").forEach((button) => {
+        button.classList.toggle("active", Number(button.dataset.index) === 0 && row.etak_id === button.textContent.match(/ETAK ([^ ·]+)/)?.[1]);
+      });
+      byId("selAddress").textContent = row.ads_lahiaa || "-";
+      byId("selType").textContent = row.tyyp_t || "-";
+      byId("selHeight").textContent = row.korgus_m ? `${row.korgus_m} m` : "User input needed";
+      byId("selEtak").textContent = row.etak_id || "-";
+      byId("selEhr").textContent = row.ehr_gid || "-";
+      byId("selAds").textContent = row.ads_oid || "-";
+      if (row.korgus_m) byId("floors").value = Math.max(1, Math.round(Number(row.korgus_m) / 3));
+      calculate();
+    }
+
+    async function checkHealth() {
+      try {
+        const response = await fetch(`${API_BASE}/api/health`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        byId("apiStatus").textContent = `Connected: ${data.records.toLocaleString("en-EE")} real building records`;
+        byId("apiStatus").className = "status ok";
+      } catch (error) {
+        byId("apiStatus").textContent = "Building search is offline. Start the local ETAK API server, then refresh.";
+        byId("apiStatus").className = "status bad";
+      }
+    }
+
+    async function search() {
+      const query = byId("searchInput").value.trim();
+      if (!query) return;
+      byId("results").innerHTML = '<div class="result"><strong>Searching...</strong><span>Checking the building index.</span></div>';
+      try {
+        const response = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}&limit=12`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        renderResults(data.results || []);
+      } catch (error) {
+        byId("results").innerHTML = '<div class="result"><strong>Search unavailable</strong><span>Start the local ETAK API server first.</span></div>';
+      }
+    }
+
+    initEnergyLabels();
+    document.querySelectorAll("input, select").forEach((item) => {
+      item.addEventListener("input", calculate);
+      item.addEventListener("change", calculate);
+    });
+    document.querySelectorAll("[data-measure]").forEach((item) => item.addEventListener("change", calculate));
+    byId("searchBtn").addEventListener("click", search);
+    byId("searchInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") search();
+    });
+    checkHealth();
+    search();
+    calculate();
+  </script>
+</body>
+</html>

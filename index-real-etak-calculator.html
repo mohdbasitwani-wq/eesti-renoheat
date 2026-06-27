@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eesti RenoHeat Explorer - Real ETAK Search</title>
+  <style>
+    :root {
+      --ink: #17211f;
+      --muted: #60706a;
+      --line: #dbe3df;
+      --panel: #ffffff;
+      --page: #eef3f0;
+      --soft: #f8fbf9;
+      --green: #2f7150;
+      --green-dark: #24593f;
+      --blue: #2d5d8f;
+      --amber: #b7791f;
+      --red: #a4443d;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      background: var(--page);
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      width: 100%;
+      height: 100%;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      z-index: 2;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    button,
+    input,
+    a { font: inherit; }
+
+    button,
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #fff;
+      background: var(--green);
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button:hover,
+    .button:hover { background: var(--green-dark); }
+
+    .button.secondary {
+      color: var(--ink);
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+      min-height: 0;
+    }
+
+    aside {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-height: 0;
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .search-box,
+    .selected-box,
+    .api-box {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    label {
+      color: #30413c;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    input {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .status {
+      min-height: 38px;
+      border-left: 3px solid var(--amber);
+      padding: 8px 0 8px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .status.ok { border-left-color: var(--green); }
+    .status.bad { border-left-color: var(--red); }
+
+    .results {
+      min-height: 0;
+      overflow: auto;
+      padding: 10px;
+      background: var(--soft);
+    }
+
+    .result {
+      display: grid;
+      gap: 4px;
+      width: 100%;
+      margin: 0 0 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      color: var(--ink);
+      background: #fff;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .result:hover {
+      border-color: var(--green);
+    }
+
+    .result strong {
+      font-size: 14px;
+    }
+
+    .result span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .kv {
+      display: grid;
+      gap: 7px;
+      font-size: 13px;
+    }
+
+    .kv-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #edf1ef;
+      padding-bottom: 7px;
+    }
+
+    .kv-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .kv-row span:first-child {
+      color: var(--muted);
+    }
+
+    .kv-row strong {
+      text-align: right;
+    }
+
+    main {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .pane-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      min-height: 42px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fbf9;
+    }
+
+    .pane-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 900;
+      color: #2e403b;
+    }
+
+    .badge {
+      display: inline-flex;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 3px 8px;
+      color: #fff;
+      background: var(--blue);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border: 0;
+      background: #fff;
+    }
+
+    @media (max-width: 920px) {
+      body { overflow: auto; }
+      .app { height: auto; min-height: 100%; }
+      header,
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+      aside {
+        min-height: 520px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      main {
+        min-height: 900px;
+      }
+      .actions {
+        justify-content: stretch;
+      }
+      .button {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Eesti RenoHeat Explorer</h1>
+        <p class="subtitle">Search the real ETAK building index, then use the calculator with editable assumptions.</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="index-maaruum-3d.html" target="_blank" rel="noreferrer">Open 3D view</a>
+        <a class="button secondary" href="index-map-visible-osm.html">Open map</a>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside>
+        <section class="api-box">
+          <p id="apiStatus" class="status">Checking local ETAK API...</p>
+        </section>
+
+        <section class="search-box">
+          <label for="searchInput">Search address, ADS OID, EHR GID, or ETAK ID</label>
+          <div class="search-row">
+            <input id="searchInput" value="Pruuli 6" autocomplete="off">
+            <button id="searchBtn" type="button">Search</button>
+          </div>
+          <p class="status">Examples: `Pruuli 6`, `ME03885623`, `121344814`, `8725095`.</p>
+        </section>
+
+        <section id="results" class="results" aria-live="polite"></section>
+
+        <section class="selected-box">
+          <span class="badge">Selected ETAK record</span>
+          <div class="kv">
+            <div class="kv-row"><span>Address</span><strong id="selAddress">-</strong></div>
+            <div class="kv-row"><span>ETAK ID</span><strong id="selEtak">-</strong></div>
+            <div class="kv-row"><span>EHR GID</span><strong id="selEhr">-</strong></div>
+            <div class="kv-row"><span>ADS OID</span><strong id="selAds">-</strong></div>
+            <div class="kv-row"><span>Type</span><strong id="selType">-</strong></div>
+            <div class="kv-row"><span>Height</span><strong id="selHeight">-</strong></div>
+          </div>
+        </section>
+      </aside>
+
+      <main>
+        <div class="pane-head">
+          <p class="pane-title">Calculator</p>
+          <span class="badge">ETAK-connected</span>
+        </div>
+        <iframe id="calculatorFrame" title="Full heating and renovation calculator" src="index-full-calculator-clean.html"></iframe>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8765";
+    const apiStatus = document.getElementById("apiStatus");
+    const searchInput = document.getElementById("searchInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const resultsEl = document.getElementById("results");
+    const frame = document.getElementById("calculatorFrame");
+
+    function setStatus(message, kind = "") {
+      apiStatus.textContent = message;
+      apiStatus.className = `status ${kind}`.trim();
+    }
+
+    function renderResults(rows) {
+      if (!rows.length) {
+        resultsEl.innerHTML = '<div class="result"><strong>No results</strong><span>Try another address fragment or identifier.</span></div>';
+        return;
+      }
+      resultsEl.innerHTML = rows.map((row, index) => `
+        <button class="result" type="button" data-index="${index}">
+          <strong>${row.ads_lahiaa || "Unnamed building"}</strong>
+          <span>ETAK ${row.etak_id || "-"} · EHR ${row.ehr_gid || "-"} · ADS ${row.ads_oid || "-"}</span>
+          <span>${row.tyyp_t || "Building"}${row.korgus_m ? ` · ${row.korgus_m} m` : ""}</span>
+        </button>
+      `).join("");
+      [...resultsEl.querySelectorAll("[data-index]")].forEach((button) => {
+        button.addEventListener("click", () => selectBuilding(rows[Number(button.dataset.index)]));
+      });
+    }
+
+    async function checkHealth() {
+      try {
+        const response = await fetch(`${API_BASE}/api/health`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        setStatus(`Connected to local ETAK API: ${data.records.toLocaleString("en-EE")} records`, "ok");
+      } catch (error) {
+        setStatus("Local ETAK API is not running. Start it with the command I gave you, then refresh this page.", "bad");
+      }
+    }
+
+    async function search() {
+      const query = searchInput.value.trim();
+      if (!query) return;
+      resultsEl.innerHTML = '<div class="result"><strong>Searching...</strong><span>Looking through the ETAK index.</span></div>';
+      try {
+        const response = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}&limit=25`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        renderResults(data.results || []);
+      } catch (error) {
+        resultsEl.innerHTML = '<div class="result"><strong>Search unavailable</strong><span>Start the local ETAK API server first.</span></div>';
+      }
+    }
+
+    function setFrameField(id, value, property = "value") {
+      try {
+        const doc = frame.contentWindow.document;
+        const element = doc.getElementById(id);
+        if (!element) return;
+        element[property] = value;
+        element.dispatchEvent(new Event("input", { bubbles: true }));
+        element.dispatchEvent(new Event("change", { bubbles: true }));
+      } catch (error) {
+        console.warn("Could not update calculator field", id, error);
+      }
+    }
+
+    function setFrameText(id, value) {
+      try {
+        const doc = frame.contentWindow.document;
+        const element = doc.getElementById(id);
+        if (element) element.textContent = value;
+      } catch (error) {
+        console.warn("Could not update calculator text", id, error);
+      }
+    }
+
+    function recalculateFrame() {
+      try {
+        if (typeof frame.contentWindow.calculate === "function") {
+          frame.contentWindow.calculate();
+        }
+      } catch (error) {
+        console.warn("Could not recalculate frame", error);
+      }
+    }
+
+    function selectBuilding(row) {
+      document.getElementById("selAddress").textContent = row.ads_lahiaa || "-";
+      document.getElementById("selEtak").textContent = row.etak_id || "-";
+      document.getElementById("selEhr").textContent = row.ehr_gid || "-";
+      document.getElementById("selAds").textContent = row.ads_oid || "-";
+      document.getElementById("selType").textContent = row.tyyp_t || "-";
+      document.getElementById("selHeight").textContent = row.korgus_m ? `${row.korgus_m} m` : "-";
+
+      setFrameField("addressInput", row.ads_lahiaa || row.ads_oid || row.etak_id || "");
+      setFrameText("ehrCode", row.ehr_gid || "-");
+      setFrameText("adsOid", row.ads_oid || "-");
+      if (row.korgus_m) setFrameField("height", row.korgus_m);
+      setFrameField("buildingType", row.tyyp_t && row.tyyp_t.includes("Elu") ? "Apartment building" : "Commercial building");
+      setFrameText("status", `Real ETAK building loaded: ETAK ${row.etak_id || "-"}, ADS ${row.ads_oid || "-"}`);
+      recalculateFrame();
+    }
+
+    searchBtn.addEventListener("click", search);
+    searchInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") search();
+    });
+    frame.addEventListener("load", () => {
+      checkHealth();
+      search();
+    });
+    checkHealth();
+  </script>
+</body>
+</html>

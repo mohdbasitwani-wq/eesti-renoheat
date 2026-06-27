@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Estonian Heating Upgrade Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIINfQPDKg12Z7J+P1pzoT9x7Q6k1h4GkQ0="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+      defer
+    ></script>
+    <script src="./app.js" defer></script>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      body {
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      #map {
+        height: 34rem;
+        min-height: 26rem;
+      }
+
+      @media (min-width: 1280px) {
+        #map {
+          height: calc(100vh - 13.5rem);
+          min-height: 34rem;
+        }
+      }
+
+      .leaflet-container {
+        font-family: inherit;
+      }
+
+      .range-input {
+        accent-color: #0f766e;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-stone-50 text-zinc-950">
+    <main class="mx-auto flex min-h-screen w-full max-w-[96rem] flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
+      <header class="rounded-md border border-zinc-200 bg-white px-4 py-4 shadow-sm sm:px-5">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">Concept C</p>
+            <h1 class="mt-1 text-2xl font-semibold leading-tight text-zinc-950 sm:text-3xl">
+              Eesti Küttevahetuse Kalkulaator / Estonian Heating Upgrade Explorer
+            </h1>
+          </div>
+
+          <div class="relative w-full lg:max-w-xl">
+            <label for="building-search" class="sr-only">Search building address</label>
+            <div class="flex items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 py-2 shadow-sm focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-100">
+              <svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-zinc-500">
+                <path fill="currentColor" d="M9.5 3a6.5 6.5 0 0 1 5.16 10.45l4.45 4.44a.86.86 0 0 1-1.22 1.22l-4.44-4.45A6.5 6.5 0 1 1 9.5 3Zm0 1.72a4.78 4.78 0 1 0 0 9.56 4.78 4.78 0 0 0 0-9.56Z" />
+              </svg>
+              <input
+                id="building-search"
+                type="search"
+                autocomplete="off"
+                class="w-full bg-transparent text-base text-zinc-950 outline-none placeholder:text-zinc-500"
+                placeholder="Search address or EHR code"
+              />
+            </div>
+            <div
+              id="autocomplete-results"
+              class="absolute z-30 mt-2 hidden max-h-72 w-full overflow-auto rounded-md border border-zinc-200 bg-white shadow-xl"
+            ></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="grid flex-1 gap-4 xl:grid-cols-[minmax(20rem,0.78fr)_minmax(30rem,1.25fr)_minmax(22rem,0.92fr)]">
+        <aside class="rounded-md border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 xl:order-1">
+          <div class="flex flex-col gap-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Current Building Profile</p>
+                <h2 id="building-address" class="mt-1 text-xl font-semibold leading-tight text-zinc-950">-</h2>
+                <p id="building-municipality" class="mt-1 text-sm text-zinc-600">-</p>
+              </div>
+              <div id="energy-badge" class="grid h-16 w-16 shrink-0 place-items-center rounded-md text-3xl font-black shadow-sm">
+                -
+              </div>
+            </div>
+
+            <dl class="grid grid-cols-2 gap-3">
+              <div class="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                <dt class="text-xs font-medium uppercase tracking-wide text-zinc-500">EHR Code</dt>
+                <dd id="ehr-code" class="mt-1 text-lg font-semibold text-zinc-950">-</dd>
+              </div>
+              <div class="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                <dt class="text-xs font-medium uppercase tracking-wide text-zinc-500">Net Area</dt>
+                <dd id="net-area-readout" class="mt-1 text-lg font-semibold text-zinc-950">-</dd>
+              </div>
+              <div class="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                <dt class="text-xs font-medium uppercase tracking-wide text-zinc-500">Heating Source</dt>
+                <dd id="heating-source" class="mt-1 text-lg font-semibold text-zinc-950">-</dd>
+              </div>
+              <div class="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                <dt class="text-xs font-medium uppercase tracking-wide text-zinc-500">Volume</dt>
+                <dd id="building-volume" class="mt-1 text-lg font-semibold text-zinc-950">-</dd>
+              </div>
+              <div class="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                <dt class="text-xs font-medium uppercase tracking-wide text-zinc-500">Geoportal Status</dt>
+                <dd id="geolocation-accuracy" class="mt-1 text-lg font-semibold text-zinc-950">-</dd>
+              </div>
+              <div class="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                <dt class="text-xs font-medium uppercase tracking-wide text-zinc-500">Coordinates</dt>
+                <dd id="geolocation-coordinates" class="mt-1 text-lg font-semibold text-zinc-950">-</dd>
+              </div>
+            </dl>
+
+            <p id="geolocation-source" class="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-950"></p>
+
+            <div class="space-y-3">
+              <div>
+                <div class="mb-2 flex items-center justify-between gap-3">
+                  <label for="net-area-slider" class="text-sm font-semibold text-zinc-800">Net area override</label>
+                  <output id="net-area-output" for="net-area-slider" class="text-sm font-semibold text-teal-800">-</output>
+                </div>
+                <input
+                  id="net-area-slider"
+                  class="range-input h-2 w-full cursor-pointer"
+                  type="range"
+                  min="40"
+                  max="320"
+                  step="0.5"
+                />
+              </div>
+
+              <div>
+                <div class="mb-2 flex items-center justify-between gap-3">
+                  <label for="winter-baseline-slider" class="text-sm font-semibold text-zinc-800">Winter baseline</label>
+                  <output id="winter-baseline-output" for="winter-baseline-slider" class="text-sm font-semibold text-teal-800">-</output>
+                </div>
+                <input
+                  id="winter-baseline-slider"
+                  class="range-input h-2 w-full cursor-pointer"
+                  type="range"
+                  min="70"
+                  max="130"
+                  step="1"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <p class="text-sm font-semibold text-zinc-800">Energy label</p>
+                <p id="demand-readout" class="text-sm font-semibold text-teal-800">-</p>
+              </div>
+              <div id="energy-label-buttons" class="grid grid-cols-4 gap-2 sm:grid-cols-8 xl:grid-cols-4"></div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="rounded-md border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 xl:order-2">
+          <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Maa-amet Geoportal / In-ADS Layer</p>
+              <h2 class="text-xl font-semibold text-zinc-950">Official Estonian address map</h2>
+            </div>
+            <p id="map-status" class="text-sm font-medium text-zinc-600">-</p>
+          </div>
+          <div id="map" class="overflow-hidden rounded-md border border-zinc-200 bg-zinc-100"></div>
+        </section>
+
+        <section class="rounded-md border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 xl:order-3">
+          <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-3">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Upgrade Comparison Engine</p>
+                <h2 class="mt-1 text-xl font-semibold leading-tight text-zinc-950">Return on heating upgrade</h2>
+              </div>
+              <div>
+                <label for="upgrade-selector" class="mb-1 block text-sm font-semibold text-zinc-800">Target system</label>
+                <select
+                  id="upgrade-selector"
+                  class="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-950 shadow-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+                ></select>
+              </div>
+            </div>
+
+            <div class="grid gap-3">
+              <div class="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                <p class="text-xs font-medium uppercase tracking-wide text-zinc-500">Estimated Current Annual Heating Bill</p>
+                <p id="current-annual-cost" class="mt-2 text-3xl font-bold text-zinc-950">-</p>
+              </div>
+              <div class="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                <p class="text-xs font-medium uppercase tracking-wide text-zinc-500">Estimated New Annual Heating Bill</p>
+                <p id="new-annual-cost" class="mt-2 text-3xl font-bold text-zinc-950">-</p>
+              </div>
+              <div class="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                <p class="text-xs font-medium uppercase tracking-wide text-zinc-500">Annual Carbon Savings</p>
+                <p id="carbon-savings" class="mt-2 text-3xl font-bold text-zinc-950">-</p>
+              </div>
+              <div class="rounded-md border border-zinc-200 bg-zinc-50 p-4">
+                <p class="text-xs font-medium uppercase tracking-wide text-zinc-500">Setup Investment Cost</p>
+                <p id="investment-cost" class="mt-2 text-3xl font-bold text-zinc-950">-</p>
+              </div>
+            </div>
+
+            <div class="rounded-md border border-teal-700 bg-teal-700 p-5 text-white shadow-sm">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-100">Payback Period</p>
+              <div class="mt-2 flex flex-col gap-2">
+                <p id="payback-period" class="text-5xl font-black leading-none">-</p>
+                <p id="annual-savings" class="text-base font-semibold text-teal-50">-</p>
+              </div>
+            </div>
+
+            <div class="grid gap-3">
+              <div class="rounded-md border border-zinc-200 p-3">
+                <p class="text-xs font-medium uppercase tracking-wide text-zinc-500">Space Heating Demand</p>
+                <p id="annual-demand" class="mt-1 text-lg font-semibold text-zinc-950">-</p>
+              </div>
+              <div class="rounded-md border border-zinc-200 p-3">
+                <p class="text-xs font-medium uppercase tracking-wide text-zinc-500">Current Purchased Energy</p>
+                <p id="current-energy-input" class="mt-1 text-lg font-semibold text-zinc-950">-</p>
+              </div>
+              <div class="rounded-md border border-zinc-200 p-3">
+                <p class="text-xs font-medium uppercase tracking-wide text-zinc-500">New Purchased Energy</p>
+                <p id="new-energy-input" class="mt-1 text-lg font-semibold text-zinc-950">-</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

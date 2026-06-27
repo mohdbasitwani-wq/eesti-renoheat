@@ -1,0 +1,19 @@
+# Local data exports
+data/*.csv
+*.zip
+
+# Python runtime/cache
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node/cache/logs
+node_modules/
+.npm-cache/
+*.log
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
